@@ -16,5 +16,7 @@ or
 
 ### `npm install`
 
+then 
+
 ### `yarn run android`
 
