@@ -1,3 +1,5 @@
+/* eslint-disable react-native/no-inline-styles */
+/* eslint-disable prettier/prettier */
 /**
  * Sample React Native App
  * https://github.com/facebook/react-native
@@ -17,13 +19,22 @@ import {
   Text,
   useColorScheme,
   View,
+  TextInput,
+  Button,
+  Alert,
+  ActivityIndicator,
+  Linking
 } from 'react-native';
+import axios from 'axios';
 
+// import { Button } from 'react-bootstrap';
+
+// import * as eva from '@eva-design/eva';
+// import {ApplicationProvider, Layout, Text} from '@ui-kitten/components';
 import {
   Colors,
   DebugInstructions,
   Header,
-  LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
@@ -56,37 +67,94 @@ const Section: React.FC<{
 };
 
 const App = () => {
+
+  const [username, setUsername] = React.useState('');
+    const [loading, setLoading] = React.useState(false);
+    const [repositories, setRepositories] = React.useState([]);
+    const [error, setError] = React.useState('');
+
+    const show_error = (message: any) => {
+        Alert.alert(
+        'Whoops!',
+        message,
+        [
+          { text: 'OK', onPress: () => console.log('OK Pressed') }
+        ]
+      );
+    };
+
+    const find_repo = () => {
+        if(username === '') {
+            show_error('Please enter a username');
+            return;
+        }
+
+        setLoading(true);
+
+        axios.get(`https://api.github.com/users/${username}/repos`)
+            .then((response) => {
+                console.log(response.data);
+                setRepositories(response.data);
+            })
+            .catch((error) => {
+                console.log(error.code);
+                show_error(`${error.code} - ${error.message}`);
+            })
+            .then(() => {
+                setLoading(false);
+            });
+    };
+  
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
 
+
+
   return (
     <SafeAreaView style={backgroundStyle}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+       <TextInput
+            // style={styles.input}
+            onChangeText={new_username => setUsername(new_username)}
+            defaultValue={username}
+            placeholder="Start Typing Your Username..."
+          />
+           <Button
+            title="Find Repositories"
+            onPress={() => find_repo()}
+          />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
-        <Header />
+        {/* <Header /> */}
         <View
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          {/* <LearnMoreLinks /> */}
+          {/* {error && (<Text style={{ backgroundColor: 'red', color: 'white' }}>{error}</Text>)} */}
+         
+          {loading && (<ActivityIndicator size="large" color="#0096FF" style={{ marginTop: 20 }} />)}
+          <ScrollView style={{ marginTop: 50, marginLeft: 12, marginRight: 12 }}>
+            {repositories.map((repository, index) => {
+              return (
+                <View style={styles.card}>
+                  <Text style={{ color: 'black' }}>
+                    <Text style={{ fontWeight: 'bold', color: '#0096FF', marginBottom: 20 }}>Name:</Text> <Text style={{ fontWeight: 'bold' }}>{repository.name} </Text>{'\n'}
+                    <Text style={{ fontWeight: 'bold', color: '#0096FF' }}>Description:</Text> <Text style={{ fontWeight: 'bold' }}>{repository.description} </Text>{'\n'}
+                    <Text style={{ fontWeight: 'bold', color: '#0096FF' }}>File Size:</Text> <Text style={{ fontWeight: 'bold' }}>{repository.size / 1000} MB </Text>{'\n'}
+                    <Text style={{ fontWeight: 'bold', color: '#0096FF', marginBottom: 40 }}>Visibility:</Text> <Text style={{ fontWeight: 'bold' }}>{repository.visibility} </Text>{'\n'}{'\n'}
+                    <Button
+                      title="Visit Repository"
+                      onPress={() => Linking.openURL(repository.html_url)}
+                    />
+                  </Text>
+                </View>
+              )
+            })}
+         </ScrollView>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -109,6 +177,27 @@ const styles = StyleSheet.create({
   },
   highlight: {
     fontWeight: '700',
+  },
+  card: { 
+    shadowColor: '#fff',
+    shadowOffset: {
+      width: 0,
+      height: 12,
+    },
+    shadowOpacity: 0.58,
+    shadowRadius: 16.00,
+
+    elevation: 24,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 5
+  },
+  button: {
+    alignItems: 'center',
+    backgroundColor: '#0096FF',
+    padding: 30,
+    width: '100%',
   },
 });
 
